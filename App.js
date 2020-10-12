@@ -1,63 +1,53 @@
-import React from 'react';
-import {
-  SafeAreaView,
-  StyleSheet,
-  ScrollView,
-  View,
-  Text,
-  StatusBar,
-  TextInput,
-  Button,
-  TouchableOpacity,
-} from 'react-native';
+import 'react-native-gesture-handler';
+import React, { useState, useEffect } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
 
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faUser, faLock } from '@fortawesome/free-solid-svg-icons'
+import LoginPage from './src/pages/auth/container/login';
+import HomePage from './src/pages/home/container/home';
 
-import styles from './src/styles/app.style';
+import auth from '@react-native-firebase/auth';
+
+const Stack = createStackNavigator();
 
 const App: () => React$Node = () => {
 
-  /*
-  firebase.auth().onAuthStateChanged( user => {
-    console.log( user );
-  });
-  */
+  const [initializing, setInitializing] = useState(true);
+  const [user, setUser] = useState();
+
+  // Handle user state changes
+  function onAuthStateChanged(user) {
+    setUser(user);
+    if (initializing) setInitializing(false);
+  }
+
+  useEffect(() => {
+    const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
+    return subscriber; // unsubscribe on unmount
+  }, []);
+
+  console.log( user )
+
+  
 
   return (
     <>
-      <StatusBar barStyle="dark-content" />
-      <SafeAreaView>
-        <ScrollView contentInsetAdjustmentBehavior="automatic" style={styles.scrollView}>
+      <NavigationContainer>
+        <Stack.Navigator>
+          {
+            user != null ?
+            <>
+              <Stack.Screen name="Login" component={LoginPage} options={{headerShown: false}} />
+              <Stack.Screen name="Home" component={HomePage} /> 
+            </>
+            : 
+            <>
+              <Stack.Screen name="Home" component={HomePage} /> 
+            </>
+          }
           
-          <View style={styles.header} >
-            <Text style={styles.headerText} >Firebase Autenticacion</Text>
-          </View>
-
-          <View style={styles.formGroup} >
-            <FontAwesomeIcon style={styles.iconInput} icon={ faUser } size={ 22 } />
-            <TextInput style={styles.textInput} placeholder="Email" />
-          </View>
-
-          <View style={styles.formGroup} >
-            <FontAwesomeIcon style={styles.iconInput} icon={ faLock } size={ 22 } />
-            <TextInput style={styles.textInput} placeholder="Password" secureTextEntry={true} />
-          </View>
-
-          <TouchableOpacity
-            onPress={() => console.log('Simple Button pressed')}
-            style={ styles.button } >
-              <Text style={styles.loginText}>Login</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => console.log('Simple Button pressed')}
-            style={ styles.button } >
-              <Text style={styles.loginText}>Login with gmail</Text>
-          </TouchableOpacity>
-
-        </ScrollView>
-      </SafeAreaView>
+        </Stack.Navigator>
+      </NavigationContainer>
     </>
   );
 };
